@@ -25,25 +25,43 @@ class Appointment {
             return [];
         }
     }
+
     public function getTotalClientes() {
-    $stmt = $this->db->query("SELECT COUNT(*) as total FROM clientes");
-    return $stmt->fetch()['total'];
-}
+        try {
+            $stmt = $this->db->query("SELECT COUNT(*) as total FROM clientes WHERE ativo = 1");
+            return $stmt->fetch()['total'];
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
 
-public function getTotalBarbeiros() {
-    $stmt = $this->db->query("SELECT COUNT(*) as total FROM barbeiros");
-    return $stmt->fetch()['total'];
-}
+    public function getTotalBarbeiros() {
+        try {
+            $stmt = $this->db->query("SELECT COUNT(*) as total FROM barbeiros WHERE ativo = 1");
+            return $stmt->fetch()['total'];
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
 
-public function getTotalServicos() {
-    $stmt = $this->db->query("SELECT COUNT(*) as total FROM servicos");
-    return $stmt->fetch()['total'];
-}
+    public function getTotalServicos() {
+        try {
+            $stmt = $this->db->query("SELECT COUNT(*) as total FROM servicos WHERE ativo = 1");
+            return $stmt->fetch()['total'];
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
 
-public function getTotalAgendamentos() {
-    $stmt = $this->db->query("SELECT COUNT(*) as total FROM agendamentos");
-    return $stmt->fetch()['total'];
-}
+    public function getTotalAgendamentos() {
+        try {
+            $stmt = $this->db->query("SELECT COUNT(*) as total FROM agendamentos");
+            return $stmt->fetch()['total'];
+        } catch (Exception $e) {
+            return 0;
+        }
+    }
+
     // Listar serviços ativos
     public function getServicos() {
         try {
@@ -167,8 +185,8 @@ public function getTotalAgendamentos() {
             
             // Inserir agendamento
             $stmt = $this->db->prepare("
-                INSERT INTO agendamentos (cliente_id, barbeiro_id, servico_id, data_agendamento, hora_agendamento, observacoes)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO agendamentos (cliente_id, barbeiro_id, servico_id, data_agendamento, hora_agendamento, observacoes, status, data_criacao)
+                VALUES (?, ?, ?, ?, ?, ?, 'agendado', NOW())
             ");
             
             if ($stmt->execute([$cliente_id, $barbeiro_id, $servico_id, $data, $hora, sanitizeInput($observacoes)])) {
@@ -183,11 +201,16 @@ public function getTotalAgendamentos() {
         }
     }
     
-    // Listar agendamentos do cliente
+    // CORRIGIDO: Listar agendamentos do cliente
     public function getAgendamentosCliente($cliente_id, $status = null) {
         try {
             $sql = "
-                SELECT a.*, b.nome as barbeiro_nome, s.nome as servico_nome, s.preco, s.duracao
+                SELECT a.*, 
+                       b.nome as barbeiro, 
+                       s.nome as servico, 
+                       s.preco as valor,
+                       s.duracao,
+                       DATE_FORMAT(CONCAT(a.data_agendamento, ' ', a.hora_agendamento), '%Y-%m-%d %H:%i:%s') as data_hora
                 FROM agendamentos a
                 JOIN barbeiros b ON a.barbeiro_id = b.id
                 JOIN servicos s ON a.servico_id = s.id
@@ -202,6 +225,70 @@ public function getTotalAgendamentos() {
             }
             
             $sql .= " ORDER BY a.data_agendamento DESC, a.hora_agendamento DESC";
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll();
+            
+        } catch (Exception $e) {
+            error_log("Erro ao buscar agendamentos do cliente: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // NOVO: Listar todos os agendamentos (para admin)
+    public function getAllAgendamentos($limit = null, $status = null) {
+        try {
+            $sql = "
+                SELECT a.*, 
+                       c.nome as cliente_nome,
+                       c.telefone as cliente_telefone,
+                       c.email as cliente_email,
+                       b.nome as barbeiro_nome, 
+                       s.nome as servico_nome, 
+                       s.preco as valor,
+                       s.duracao,
+                       DATE_FORMAT(CONCAT(a.data_agendamento, ' ', a.hora_agendamento), '%Y-%m-%d %H:%i:%s') as data_hora_completa
+                FROM agendamentos a
+                JOIN clientes c ON a.cliente_id = c.id
+                JOIN barbeiros b ON a.barbeiro_id = b.id
+                JOIN servicos s ON a.servico_id = s.id
+            ";
+            
+            $params = [];
+            
+            if ($status) {
+                $sql .= " WHERE a.status = ?";
+                $params[] = $status;
+            }
+            
+            $sql .= " ORDER BY a.data_agendamento DESC, a.hora_agendamento DESC";
+            
+            if ($limit) {
+                $sql .= " LIMIT ?";
+                $params[] = $limit;
+            }
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll();
+            
+        } catch (Exception $e) {
+            error_log("Erro ao buscar todos os agendamentos: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    // Cancelar agendamento
+    public function cancelarAgendamento($id, $cliente_id = null) {
+        try {
+            $sql = "UPDATE agendamentos SET status = 'cancelado' WHERE id = ?";
+            $params = [$id];
+            
+            if ($cliente_id) {
+                $sql .= " AND cliente_id = ?";
+                $params[] = $cliente_id;
+            }
             
             $stmt = $this->db->prepare($sql);
             

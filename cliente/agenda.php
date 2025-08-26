@@ -95,8 +95,8 @@ $agendamentos = $appointment->getAgendamentosCliente($cliente_data['id']);
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="dashboard.php">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        <a class="nav-link active" href="agenda.php">
+                            <i class="fas fa-calendar-alt"></i> Meus Agendamentos
                         </a>
                     </li>
                     <li class="nav-item">
@@ -133,9 +133,9 @@ $agendamentos = $appointment->getAgendamentosCliente($cliente_data['id']);
                                 <p class="mb-0">Gerencie seus agendamentos e acompanhe o status dos seus serviços.</p>
                             </div>
                             <div class="col-md-4 text-end">
-                             <a href="agendar.php" class="btn btn-primary">
-    <i class="fa fa-calendar-plus"></i> Novo Agendamento
-</a>
+                                <a href="agendar.php" class="btn btn-primary">
+                                    <i class="fa fa-calendar-plus"></i> Novo Agendamento
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -222,42 +222,65 @@ $agendamentos = $appointment->getAgendamentosCliente($cliente_data['id']);
                                             <th>Ações</th>
                                         </tr>
                                     </thead>
-<tbody>
-<?php if (!empty($appointments)): ?>
-    <?php foreach ($appointments as $row): ?>
-        <tr>
-            <td>
-                <?php if (!empty($row['data_hora'])): ?>
-                    <?= date('d/m/Y', strtotime($row['data_hora'])); ?>
-                <?php else: ?>
-                    -
-                <?php endif; ?>
-            </td>
-            <td>
-                <?= htmlspecialchars($row['barbeiro'] ?? '-') ?>
-            </td>
-            <td>
-                <?= htmlspecialchars($row['servico'] ?? '-') ?>
-            </td>
-            <td>
-                R$ <?= number_format($row['valor'] ?? 0, 2, ',', '.'); ?>
-            </td>
-            <td>
-                <?= ucfirst($row['status'] ?? '-') ?>
-            </td>
-            <td>
-                <!-- Aqui você coloca as ações (editar, cancelar, etc.) -->
-                <a href="editar.php?id=<?= $row['id'] ?>">Editar</a> | 
-                <a href="cancelar.php?id=<?= $row['id'] ?>">Cancelar</a>
-            </td>
-        </tr>
-    <?php endforeach; ?>
-<?php else: ?>
-    <tr>
-        <td colspan="6" style="text-align:center;">Nenhum agendamento encontrado.</td>
-    </tr>
-<?php endif; ?>
-</tbody>
+                                    <tbody>
+                                    <?php if (!empty($agendamentos)): ?>
+                                        <?php foreach ($agendamentos as $row): ?>
+                                            <tr>
+                                                <td>
+                                                    <?php if (!empty($row['data_agendamento'])): ?>
+                                                        <div>
+                                                            <strong><?= date('d/m/Y', strtotime($row['data_agendamento'])); ?></strong><br>
+                                                            <small class="text-muted"><?= date('H:i', strtotime($row['hora_agendamento'])); ?></small>
+                                                        </div>
+                                                    <?php else: ?>
+                                                        -
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <i class="fas fa-user-tie text-muted me-1"></i>
+                                                    <?= htmlspecialchars($row['barbeiro'] ?? '-') ?>
+                                                </td>
+                                                <td>
+                                                    <i class="fas fa-cut text-muted me-1"></i>
+                                                    <?= htmlspecialchars($row['servico'] ?? '-') ?>
+                                                    <?php if (!empty($row['duracao'])): ?>
+                                                        <br><small class="text-muted"><?= $row['duracao'] ?> min</small>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <strong class="text-success">R$ <?= number_format($row['valor'] ?? 0, 2, ',', '.'); ?></strong>
+                                                </td>
+                                                <td>
+                                                    <?php
+                                                    $status = $row['status'] ?? 'agendado';
+                                                    $badge_class = 'status-' . $status;
+                                                    $status_text = ucfirst($status);
+                                                    ?>
+                                                    <span class="badge <?= $badge_class ?> status-badge">
+                                                        <?= $status_text ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <?php if ($status == 'agendado' || $status == 'confirmado'): ?>
+                                                        <button class="btn btn-outline-danger btn-sm" onclick="cancelarAgendamento(<?= $row['id'] ?>)">
+                                                            <i class="fas fa-times"></i> Cancelar
+                                                        </button>
+                                                    <?php elseif ($status == 'cancelado'): ?>
+                                                        <span class="text-muted">Cancelado</span>
+                                                    <?php elseif ($status == 'finalizado'): ?>
+                                                        <span class="text-success">
+                                                            <i class="fas fa-check-circle"></i> Finalizado
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="6" style="text-align:center;">Nenhum agendamento encontrado.</td>
+                                        </tr>
+                                    <?php endif; ?>
+                                    </tbody>
                                 </table>
                             </div>
                         <?php endif; ?>

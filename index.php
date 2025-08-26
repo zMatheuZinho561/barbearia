@@ -148,7 +148,8 @@ $produtos_destaque = $products->getProdutosDestaque(6);
                                 <i class="fas fa-user"></i> <?= htmlspecialchars($cliente_data['nome']) ?>
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="admin/dashboard.php"><i class="fas fa-tachometer-alt"></i> Meus Agendamentos</a></li>
+                                <li><a class="dropdown-item" href="cliente/agenda.php"><i class="fas fa-calendar-alt"></i> Meus Agendamentos</a></li>
+                                <li><a class="dropdown-item" href="cliente/agendar.php"><i class="fas fa-calendar-plus"></i> Novo Agendamento</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="cliente/logout.php"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
                             </ul>
@@ -176,8 +177,11 @@ $produtos_destaque = $products->getProdutosDestaque(6);
             <h1 class="display-4 fw-bold mb-4">Bem-vindo à BarberShop</h1>
             <p class="lead mb-5">O melhor cuidado para seu visual está aqui. Profissionais experientes e ambiente acolhedor.</p>
             <?php if ($cliente_logado): ?>
-                <a href="cliente/agenda.php" class="btn btn-primary btn-lg me-3">
+                <a href="cliente/agendar.php" class="btn btn-primary btn-lg me-3">
                     <i class="fas fa-calendar-plus"></i> Agendar Horário
+                </a>
+                <a href="cliente/agenda.php" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-calendar-alt"></i> Meus Agendamentos
                 </a>
             <?php else: ?>
                 <a href="cliente/register.php" class="btn btn-primary btn-lg me-3">
