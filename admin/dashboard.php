@@ -287,7 +287,7 @@ $admin_data = $auth->getAdminData();
                         <div class="text-center py-4">
                             <i class="fas fa-calendar-day fa-3x text-muted mb-3"></i>
                             <p class="text-muted">Nenhum agendamento para hoje</p>
-                            <a href="agendamentos.php" class="btn btn-primary">
+                            <a href="admin_agendamentos.php" class="btn btn-primary">
                                 Ver Todos os Agendamentos
                             </a>
                         </div>
