@@ -241,6 +241,11 @@ $admin_data = $auth->getAdminData();
                             <i class="fas fa-box"></i> Produtos
                         </a>
                     </li>
+                     <li class="nav-item">
+                        <a class="nav-link" href="planos.php">
+                            <i class="fas fa-box"></i> Planos
+                        </a>
+                    </li>
                 </ul>
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
