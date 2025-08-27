@@ -18,6 +18,6 @@ if (!$auth->isClientLoggedIn()) {
 }
 
 // Redirecionar para página de login admin
-header('Location: login.php?logout=success');
+header('Location: admin_login.php?logout=success');
 exit;
 ?>

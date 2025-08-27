@@ -273,7 +273,7 @@ $admin_data = $auth->getAdminData();
                             </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <a class="dropdown-item text-danger" href="logout.php">
+                                <a class="dropdown-item text-danger" href="admin_logout.php">
                                     <i class="fas fa-sign-out-alt"></i> Sair do Admin
                                 </a>
                             </li>

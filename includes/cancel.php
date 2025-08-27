@@ -56,8 +56,8 @@ try {
     $agora = new DateTime();
     $diff = $data_agendamento->getTimestamp() - $agora->getTimestamp();
     
-    if ($diff < 7200) { // 2 horas = 7200 segundos
-        echo json_encode(['success' => false, 'message' => 'Não é possível cancelar com menos de 2 horas de antecedência.']);
+    if ($diff < 3600) { // 2 horas = 7200 segundos
+        echo json_encode(['success' => false, 'message' => 'Não é possível cancelar com menos de 1 horas de antecedência.']);
         exit;
     }
     

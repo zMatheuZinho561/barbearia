@@ -313,7 +313,7 @@ try {
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="agendamentos.php"><i class="fas fa-calendar"></i> Agendamentos</a></li>
+                    <li class="nav-item"><a class="nav-link" href="admin_agendamentos.php"><i class="fas fa-calendar"></i> Agendamentos</a></li>
                     <li class="nav-item"><a class="nav-link active" href="clientes.php"><i class="fas fa-users"></i> Clientes</a></li>
                     <li class="nav-item"><a class="nav-link" href="barbeiros.php"><i class="fas fa-user-tie"></i> Barbeiros</a></li>
                     <li class="nav-item"><a class="nav-link" href="servicos.php"><i class="fas fa-list"></i> Serviços</a></li>
@@ -327,11 +327,11 @@ try {
                             <span class="admin-badge">ADMIN</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="../index.php" target="_blank"><i class="fas fa-external-link-alt"></i> Ver Site Público</a></li>
+                            
                             <li><a class="dropdown-item" href="perfil.php"><i class="fas fa-user-cog"></i> Meu Perfil</a></li>
                             <li><a class="dropdown-item" href="configuracoes.php"><i class="fas fa-cogs"></i> Configurações</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="logout.php"><i class="fas fa-sign-out-alt"></i> Sair do Admin</a></li>
+                            <li><a class="dropdown-item text-danger" href="admin_logout.php"><i class="fas fa-sign-out-alt"></i> Sair do Admin</a></li>
                         </ul>
                     </li>
                 </ul>

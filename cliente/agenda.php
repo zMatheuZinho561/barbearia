@@ -238,17 +238,17 @@ $agendamentos = $appointment->getAgendamentosCliente($cliente_data['id']);
                                                 </td>
                                                 <td>
                                                     <i class="fas fa-user-tie text-muted me-1"></i>
-                                                    <?= htmlspecialchars($row['barbeiro'] ?? '-') ?>
+                                                    <?= htmlspecialchars($row['barbeiro_nome'] ?? '-') ?>
                                                 </td>
                                                 <td>
                                                     <i class="fas fa-cut text-muted me-1"></i>
-                                                    <?= htmlspecialchars($row['servico'] ?? '-') ?>
+                                                    <?= htmlspecialchars($row['servico_nome'] ?? '-') ?>
                                                     <?php if (!empty($row['duracao'])): ?>
                                                         <br><small class="text-muted"><?= $row['duracao'] ?> min</small>
                                                     <?php endif; ?>
                                                 </td>
                                                 <td>
-                                                    <strong class="text-success">R$ <?= number_format($row['valor'] ?? 0, 2, ',', '.'); ?></strong>
+                                                    <strong class="text-success">R$ <?= number_format($row['preco'] ?? 0, 2, ',', '.'); ?></strong>
                                                 </td>
                                                 <td>
                                                     <?php
@@ -323,7 +323,7 @@ $agendamentos = $appointment->getAgendamentosCliente($cliente_data['id']);
         document.getElementById('confirmCancel').addEventListener('click', function() {
             if (agendamentoIdParaCancelar) {
                 // Fazer requisição AJAX para cancelar o agendamento
-                fetch('cancelar_agendamento.php', {
+                fetch('../includes/cancel.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
