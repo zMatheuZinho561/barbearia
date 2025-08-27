@@ -25,43 +25,27 @@ class Appointment {
             return [];
         }
     }
-
+    
     public function getTotalClientes() {
-        try {
-            $stmt = $this->db->query("SELECT COUNT(*) as total FROM clientes WHERE ativo = 1");
-            return $stmt->fetch()['total'];
-        } catch (Exception $e) {
-            return 0;
-        }
+        $stmt = $this->db->query("SELECT COUNT(*) as total FROM clientes");
+        return $stmt->fetch()['total'];
     }
 
     public function getTotalBarbeiros() {
-        try {
-            $stmt = $this->db->query("SELECT COUNT(*) as total FROM barbeiros WHERE ativo = 1");
-            return $stmt->fetch()['total'];
-        } catch (Exception $e) {
-            return 0;
-        }
+        $stmt = $this->db->query("SELECT COUNT(*) as total FROM barbeiros");
+        return $stmt->fetch()['total'];
     }
 
     public function getTotalServicos() {
-        try {
-            $stmt = $this->db->query("SELECT COUNT(*) as total FROM servicos WHERE ativo = 1");
-            return $stmt->fetch()['total'];
-        } catch (Exception $e) {
-            return 0;
-        }
+        $stmt = $this->db->query("SELECT COUNT(*) as total FROM servicos");
+        return $stmt->fetch()['total'];
     }
 
     public function getTotalAgendamentos() {
-        try {
-            $stmt = $this->db->query("SELECT COUNT(*) as total FROM agendamentos");
-            return $stmt->fetch()['total'];
-        } catch (Exception $e) {
-            return 0;
-        }
+        $stmt = $this->db->query("SELECT COUNT(*) as total FROM agendamentos");
+        return $stmt->fetch()['total'];
     }
-
+    
     // Listar serviços ativos
     public function getServicos() {
         try {
@@ -79,9 +63,16 @@ class Appointment {
         }
     }
     
-    // Obter horários disponíveis de um barbeiro em uma data
+    // Obter horários disponíveis de um barbeiro em uma data - CORRIGIDO
     public function getHorariosDisponiveis($barbeiro_id, $data) {
         try {
+            // Verificar se barbeiro existe
+            $stmt = $this->db->prepare("SELECT id FROM barbeiros WHERE id = ? AND ativo = 1");
+            $stmt->execute([$barbeiro_id]);
+            if ($stmt->rowCount() === 0) {
+                return [];
+            }
+            
             $dia_semana = date('N', strtotime($data)); // 1=Segunda, 7=Domingo
             
             // Buscar horário de funcionamento do barbeiro
@@ -94,12 +85,20 @@ class Appointment {
             $funcionamento = $stmt->fetch();
             
             if (!$funcionamento) {
-                return []; // Barbeiro não trabalha neste dia
+                // Se não tem horário específico, usar horário padrão
+                // Segunda a Sexta: 8:00 às 18:00, Sábado: 8:00 às 14:00
+                if ($dia_semana >= 1 && $dia_semana <= 5) {
+                    $funcionamento = ['hora_inicio' => '08:00:00', 'hora_fim' => '18:00:00'];
+                } elseif ($dia_semana == 6) {
+                    $funcionamento = ['hora_inicio' => '08:00:00', 'hora_fim' => '14:00:00'];
+                } else {
+                    return []; // Domingo fechado
+                }
             }
             
             // Buscar agendamentos já marcados
             $stmt = $this->db->prepare("
-                SELECT hora_agendamento, s.duracao
+                SELECT TIME(a.hora_agendamento) as hora_agendamento, s.duracao
                 FROM agendamentos a
                 JOIN servicos s ON a.servico_id = s.id
                 WHERE a.barbeiro_id = ? AND a.data_agendamento = ? 
@@ -111,10 +110,10 @@ class Appointment {
             // Gerar horários disponíveis (intervalos de 30 minutos)
             $horarios = [];
             $inicio = strtotime($funcionamento['hora_inicio']);
-            $fim = strtotime($funcionamento['hora_fim']);
+            $fim = strtotime($funcionamento['hora_fim']) - 1800; // -30min para último horário
             
-            while ($inicio < $fim) {
-                $hora = date('H:i', $inicio);
+            while ($inicio <= $fim) {
+                $hora_atual = date('H:i', $inicio);
                 $disponivel = true;
                 
                 // Verificar se o horário conflita com agendamentos existentes
@@ -122,7 +121,13 @@ class Appointment {
                     $hora_agendada = strtotime($agendado['hora_agendamento']);
                     $fim_agendamento = $hora_agendada + ($agendado['duracao'] * 60);
                     
-                    if ($inicio >= $hora_agendada && $inicio < $fim_agendamento) {
+                    $inicio_atual = $inicio;
+                    $fim_atual = $inicio + 1800; // +30 minutos
+                    
+                    // Verificar sobreposição
+                    if (($inicio_atual >= $hora_agendada && $inicio_atual < $fim_agendamento) ||
+                        ($fim_atual > $hora_agendada && $fim_atual <= $fim_agendamento) ||
+                        ($inicio_atual <= $hora_agendada && $fim_atual >= $fim_agendamento)) {
                         $disponivel = false;
                         break;
                     }
@@ -130,21 +135,22 @@ class Appointment {
                 
                 // Não permitir agendamento no passado
                 $agora = new DateTime();
-                $data_hora = new DateTime($data . ' ' . $hora);
+                $data_hora = new DateTime($data . ' ' . $hora_atual);
                 if ($data_hora <= $agora) {
                     $disponivel = false;
                 }
                 
                 if ($disponivel) {
-                    $horarios[] = $hora;
+                    $horarios[] = $hora_atual;
                 }
                 
                 $inicio += 1800; // Adicionar 30 minutos
             }
             
             return $horarios;
+            
         } catch (Exception $e) {
-            error_log("Erro ao buscar horários: " . $e->getMessage());
+            error_log("Erro ao buscar horários disponíveis: " . $e->getMessage());
             return [];
         }
     }
@@ -185,8 +191,8 @@ class Appointment {
             
             // Inserir agendamento
             $stmt = $this->db->prepare("
-                INSERT INTO agendamentos (cliente_id, barbeiro_id, servico_id, data_agendamento, hora_agendamento, observacoes, status, data_criacao)
-                VALUES (?, ?, ?, ?, ?, ?, 'agendado', NOW())
+                INSERT INTO agendamentos (cliente_id, barbeiro_id, servico_id, data_agendamento, hora_agendamento, observacoes)
+                VALUES (?, ?, ?, ?, ?, ?)
             ");
             
             if ($stmt->execute([$cliente_id, $barbeiro_id, $servico_id, $data, $hora, sanitizeInput($observacoes)])) {
@@ -201,16 +207,11 @@ class Appointment {
         }
     }
     
-    // CORRIGIDO: Listar agendamentos do cliente
+    // Listar agendamentos do cliente - CORRIGIDO
     public function getAgendamentosCliente($cliente_id, $status = null) {
         try {
             $sql = "
-                SELECT a.*, 
-                       b.nome as barbeiro, 
-                       s.nome as servico, 
-                       s.preco as valor,
-                       s.duracao,
-                       DATE_FORMAT(CONCAT(a.data_agendamento, ' ', a.hora_agendamento), '%Y-%m-%d %H:%i:%s') as data_hora
+                SELECT a.*, b.nome as barbeiro_nome, s.nome as servico_nome, s.preco, s.duracao
                 FROM agendamentos a
                 JOIN barbeiros b ON a.barbeiro_id = b.id
                 JOIN servicos s ON a.servico_id = s.id
@@ -232,49 +233,6 @@ class Appointment {
             
         } catch (Exception $e) {
             error_log("Erro ao buscar agendamentos do cliente: " . $e->getMessage());
-            return [];
-        }
-    }
-
-    // NOVO: Listar todos os agendamentos (para admin)
-    public function getAllAgendamentos($limit = null, $status = null) {
-        try {
-            $sql = "
-                SELECT a.*, 
-                       c.nome as cliente_nome,
-                       c.telefone as cliente_telefone,
-                       c.email as cliente_email,
-                       b.nome as barbeiro_nome, 
-                       s.nome as servico_nome, 
-                       s.preco as valor,
-                       s.duracao,
-                       DATE_FORMAT(CONCAT(a.data_agendamento, ' ', a.hora_agendamento), '%Y-%m-%d %H:%i:%s') as data_hora_completa
-                FROM agendamentos a
-                JOIN clientes c ON a.cliente_id = c.id
-                JOIN barbeiros b ON a.barbeiro_id = b.id
-                JOIN servicos s ON a.servico_id = s.id
-            ";
-            
-            $params = [];
-            
-            if ($status) {
-                $sql .= " WHERE a.status = ?";
-                $params[] = $status;
-            }
-            
-            $sql .= " ORDER BY a.data_agendamento DESC, a.hora_agendamento DESC";
-            
-            if ($limit) {
-                $sql .= " LIMIT ?";
-                $params[] = $limit;
-            }
-            
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute($params);
-            return $stmt->fetchAll();
-            
-        } catch (Exception $e) {
-            error_log("Erro ao buscar todos os agendamentos: " . $e->getMessage());
             return [];
         }
     }
@@ -356,6 +314,73 @@ class Appointment {
         }
     }
     
+    // Métodos para o dashboard admin
+    public function getProximosAgendamentos($limite = 10) {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT a.id, a.data_agendamento, a.hora_agendamento, a.status,
+                       c.nome as cliente_nome, c.telefone as cliente_telefone,
+                       b.nome as barbeiro_nome, s.nome as servico_nome, s.preco
+                FROM agendamentos a
+                JOIN clientes c ON a.cliente_id = c.id
+                JOIN barbeiros b ON a.barbeiro_id = b.id
+                JOIN servicos s ON a.servico_id = s.id
+                WHERE a.data_agendamento >= CURDATE()
+                AND a.status IN ('agendado', 'confirmado')
+                ORDER BY a.data_agendamento ASC, a.hora_agendamento ASC
+                LIMIT ?
+            ");
+            $stmt->execute([$limite]);
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            error_log("Erro ao buscar próximos agendamentos: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    public function getAgendamentosHoje() {
+        try {
+            $stmt = $this->db->prepare("
+                SELECT a.id, a.hora_agendamento, a.status,
+                       c.nome as cliente_nome, c.telefone as cliente_telefone,
+                       b.nome as barbeiro_nome, s.nome as servico_nome, s.preco
+                FROM agendamentos a
+                JOIN clientes c ON a.cliente_id = c.id
+                JOIN barbeiros b ON a.barbeiro_id = b.id
+                JOIN servicos s ON a.servico_id = s.id
+                WHERE a.data_agendamento = CURDATE()
+                ORDER BY a.hora_agendamento ASC
+            ");
+            $stmt->execute();
+            return $stmt->fetchAll();
+        } catch (Exception $e) {
+            error_log("Erro ao buscar agendamentos de hoje: " . $e->getMessage());
+            return [];
+        }
+    }
+    
+    public function getFaturamentoMes($mes = null, $ano = null) {
+        try {
+            if (!$mes) $mes = date('m');
+            if (!$ano) $ano = date('Y');
+            
+            $stmt = $this->db->prepare("
+                SELECT SUM(s.preco) as total
+                FROM agendamentos a
+                JOIN servicos s ON a.servico_id = s.id
+                WHERE MONTH(a.data_agendamento) = ? 
+                AND YEAR(a.data_agendamento) = ?
+                AND a.status = 'finalizado'
+            ");
+            $stmt->execute([$mes, $ano]);
+            $result = $stmt->fetch();
+            return $result['total'] ?? 0;
+        } catch (Exception $e) {
+            error_log("Erro ao buscar faturamento: " . $e->getMessage());
+            return 0;
+        }
+    }
+    
     // Estatísticas para dashboard admin
     public function getEstatisticas() {
         try {
@@ -385,17 +410,7 @@ class Appointment {
             $stats['total_clientes'] = $stmt->fetch()['total'];
             
             // Faturamento do mês
-            $stmt = $this->db->prepare("
-                SELECT SUM(s.preco) as total
-                FROM agendamentos a
-                JOIN servicos s ON a.servico_id = s.id
-                WHERE MONTH(a.data_agendamento) = MONTH(CURDATE()) 
-                AND YEAR(a.data_agendamento) = YEAR(CURDATE())
-                AND a.status = 'finalizado'
-            ");
-            $stmt->execute();
-            $result = $stmt->fetch();
-            $stats['faturamento_mes'] = $result['total'] ?? 0;
+            $stats['faturamento_mes'] = $this->getFaturamentoMes();
             
             return $stats;
             
