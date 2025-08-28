@@ -3,10 +3,12 @@ require_once '../config/database.php';
 require_once '../includes/auth.php';
 require_once '../includes/appointment.php';
 require_once '../includes/products.php';
+require_once '../includes/plans.php';
 
 $auth = new Auth();
 $appointment = new Appointment();
 $product = new Products();
+$plans = new Plans();
 
 // Verificar se usuário logado é admin
 if (!$auth->isAdminLoggedIn()) {
@@ -52,6 +54,9 @@ try {
     $result = $stmt->fetch();
     $stats['faturamento_mes'] = $result['total'] ?? 0;
     
+    // Estatísticas de planos
+    $estatisticas_planos = $plans->getEstatisticas();
+    
     // Próximos agendamentos (5)
     $stmt = $db->prepare("
         SELECT a.*, c.nome as cliente_nome, b.nome as barbeiro_nome, s.nome as servico_nome
@@ -66,12 +71,34 @@ try {
     $stmt->execute();
     $proximos_agendamentos = $stmt->fetchAll();
     
+    // Planos que vencem em breve
+    $stmt = $db->prepare("
+        SELECT cp.*, c.nome as cliente_nome, p.nome as plano_nome,
+               DATEDIFF(cp.data_vencimento, CURDATE()) as dias_restantes
+        FROM cliente_planos cp
+        JOIN clientes c ON cp.cliente_id = c.id
+        JOIN planos p ON cp.plano_id = p.id
+        WHERE cp.status = 'ativo' 
+        AND cp.data_vencimento BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+        ORDER BY cp.data_vencimento ASC
+        LIMIT 5
+    ");
+    $stmt->execute();
+    $planos_vencendo = $stmt->fetchAll();
+    
 } catch (Exception $e) {
     $stats['agendamentos_hoje'] = 0;
     $stats['agendamentos_pendentes'] = 0;
     $stats['agendamentos_confirmados'] = 0;
     $stats['faturamento_mes'] = 0;
     $proximos_agendamentos = [];
+    $planos_vencendo = [];
+    $estatisticas_planos = [
+        'assinaturas_ativas' => 0,
+        'vencem_breve' => 0,
+        'vencidas' => 0,
+        'receita_mensal' => 0
+    ];
 }
 
 $admin_data = $auth->getAdminData();
@@ -196,6 +223,12 @@ $admin_data = $auth->getAdminData();
             color: white !important;
             border-radius: 5px;
         }
+        
+        .alert-vencimento {
+            background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+            border: none;
+            color: #2d3436;
+        }
     </style>
 </head>
 <body>
@@ -237,13 +270,18 @@ $admin_data = $auth->getAdminData();
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="produtos.php">
-                            <i class="fas fa-box"></i> Produtos
+                        <a class="nav-link" href="planos.php">
+                            <i class="fas fa-crown"></i> Planos
                         </a>
                     </li>
-                     <li class="nav-item">
-                        <a class="nav-link" href="planos.php">
-                            <i class="fas fa-box"></i> Planos
+                    <li class="nav-item">
+                        <a class="nav-link" href="clientes_planos.php">
+                            <i class="fas fa-users-cog"></i> Assinaturas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="produtos.php">
+                            <i class="fas fa-box"></i> Produtos
                         </a>
                     </li>
                 </ul>
@@ -333,7 +371,30 @@ $admin_data = $auth->getAdminData();
             </div>
         </div>
 
-        <!-- Estatísticas principais -->
+        <!-- Alertas de planos vencendo -->
+        <?php if (!empty($planos_vencendo)): ?>
+            <div class="alert alert-vencimento alert-dismissible fade show" role="alert">
+                <h6><i class="fas fa-exclamation-triangle"></i> Planos com vencimento próximo:</h6>
+                <ul class="mb-0">
+                    <?php foreach ($planos_vencendo as $vencimento): ?>
+                        <li>
+                            <strong><?= htmlspecialchars($vencimento['cliente_nome']) ?></strong> 
+                            (<?= htmlspecialchars($vencimento['plano_nome']) ?>) - 
+                            Vence em <?= $vencimento['dias_restantes'] ?> dia(s) 
+                            (<?= date('d/m/Y', strtotime($vencimento['data_vencimento'])) ?>)
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <div class="mt-2">
+                    <a href="clientes_planos.php?vencimento=vence_breve" class="btn btn-sm btn-outline-warning">
+                        <i class="fas fa-eye"></i> Ver Todos
+                    </a>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+        <!-- Estatísticas principais incluindo planos -->
         <div class="row mb-4">
             <div class="col-xl-2 col-md-4 col-6 mb-3">
                 <div class="card h-100">
@@ -364,10 +425,10 @@ $admin_data = $auth->getAdminData();
             <div class="col-xl-2 col-md-4 col-6 mb-3">
                 <div class="card h-100">
                     <div class="card-body stat-card">
-                        <i class="fas fa-list stat-icon text-warning"></i>
-                        <div class="stat-number text-warning"><?= $stats['total_servicos'] ?></div>
-                        <div class="stat-label">Serviços</div>
-                        <a href="servicos.php" class="btn btn-sm btn-outline-warning mt-2">
+                        <i class="fas fa-crown stat-icon text-warning"></i>
+                        <div class="stat-number text-warning"><?= $estatisticas_planos['assinaturas_ativas'] ?></div>
+                        <div class="stat-label">Planos Ativos</div>
+                        <a href="clientes_planos.php" class="btn btn-sm btn-outline-warning mt-2">
                             <i class="fas fa-eye"></i> Gerenciar
                         </a>
                     </div>
@@ -380,7 +441,7 @@ $admin_data = $auth->getAdminData();
                         <i class="fas fa-calendar-alt stat-icon text-info"></i>
                         <div class="stat-number text-info"><?= $stats['total_agendamentos'] ?></div>
                         <div class="stat-label">Agendamentos</div>
-                        <a href="agendamentos.php" class="btn btn-sm btn-outline-info mt-2">
+                        <a href="admin_agendamentos.php" class="btn btn-sm btn-outline-info mt-2">
                             <i class="fas fa-eye"></i> Gerenciar
                         </a>
                     </div>
@@ -404,8 +465,8 @@ $admin_data = $auth->getAdminData();
                 <div class="card h-100">
                     <div class="card-body stat-card">
                         <i class="fas fa-money-bill-wave stat-icon text-danger"></i>
-                        <div class="stat-number text-danger">R$ <?= number_format($stats['faturamento_mes'], 2, ',', '.') ?></div>
-                        <div class="stat-label">Faturamento Mês</div>
+                        <div class="stat-number text-danger">R$ <?= number_format($stats['faturamento_mes'] + $estatisticas_planos['receita_mensal'], 2, ',', '.') ?></div>
+                        <div class="stat-label">Receita Total</div>
                         <a href="relatorios.php" class="btn btn-sm btn-outline-danger mt-2">
                             <i class="fas fa-chart-bar"></i> Relatórios
                         </a>
@@ -414,19 +475,19 @@ $admin_data = $auth->getAdminData();
             </div>
         </div>
 
-        <!-- Estatísticas de agendamentos -->
+        <!-- Estatísticas de agendamentos e planos -->
         <div class="row mb-4">
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
                 <div class="card">
                     <div class="card-body text-center">
                         <h4 class="text-primary"><?= $stats['agendamentos_hoje'] ?></h4>
                         <small class="text-muted">
-                            <i class="fas fa-calendar-day"></i> Agendamentos Hoje
+                            <i class="fas fa-calendar-day"></i> Hoje
                         </small>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
                 <div class="card">
                     <div class="card-body text-center">
                         <h4 class="text-warning"><?= $stats['agendamentos_pendentes'] ?></h4>
@@ -436,7 +497,7 @@ $admin_data = $auth->getAdminData();
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
                 <div class="card">
                     <div class="card-body text-center">
                         <h4 class="text-success"><?= $stats['agendamentos_confirmados'] ?></h4>
@@ -446,7 +507,27 @@ $admin_data = $auth->getAdminData();
                     </div>
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-2 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="text-warning"><?= $estatisticas_planos['vencem_breve'] ?></h4>
+                        <small class="text-muted">
+                            <i class="fas fa-exclamation-triangle"></i> Vencem 7d
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="text-danger"><?= $estatisticas_planos['vencidas'] ?></h4>
+                        <small class="text-muted">
+                            <i class="fas fa-times-circle"></i> Vencidos
+                        </small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2 mb-3">
                 <div class="card">
                     <div class="card-body text-center">
                         <button class="btn btn-primary btn-sm" onclick="location.reload()">
@@ -470,7 +551,7 @@ $admin_data = $auth->getAdminData();
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-6">
-                                <a href="agendamentos.php?action=novo" class="btn btn-primary w-100 quick-action-btn">
+                                <a href="admin_agendamentos.php?action=novo" class="btn btn-primary w-100 quick-action-btn">
                                     <i class="fas fa-calendar-plus"></i>
                                     <span>Novo Agendamento</span>
                                 </a>
@@ -482,15 +563,15 @@ $admin_data = $auth->getAdminData();
                                 </a>
                             </div>
                             <div class="col-6">
-                                <a href="barbeiros.php?action=novo" class="btn btn-warning w-100 quick-action-btn">
-                                    <i class="fas fa-user-tie"></i>
-                                    <span>Cadastrar Barbeiro</span>
+                                <a href="clientes_planos.php" class="btn btn-warning w-100 quick-action-btn">
+                                    <i class="fas fa-crown"></i>
+                                    <span>Associar Plano</span>
                                 </a>
                             </div>
                             <div class="col-6">
-                                <a href="servicos.php?action=novo" class="btn btn-info w-100 quick-action-btn">
+                                <a href="planos.php?action=novo" class="btn btn-info w-100 quick-action-btn">
                                     <i class="fas fa-plus-circle"></i>
-                                    <span>Novo Serviço</span>
+                                    <span>Novo Plano</span>
                                 </a>
                             </div>
                         </div>
@@ -504,7 +585,7 @@ $admin_data = $auth->getAdminData();
                         <h5 class="mb-0">
                             <i class="fas fa-calendar-check"></i> Próximos Agendamentos
                         </h5>
-                        <a href="agendamentos.php" class="btn btn-sm btn-outline-primary">
+                        <a href="admin_agendamentos.php" class="btn btn-sm btn-outline-primary">
                             Ver Todos
                         </a>
                     </div>

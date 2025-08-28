@@ -150,6 +150,7 @@ $produtos_destaque = $products->getProdutosDestaque(6);
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="cliente/agenda.php"><i class="fas fa-calendar-alt"></i> Meus Agendamentos</a></li>
                                 <li><a class="dropdown-item" href="cliente/agendar.php"><i class="fas fa-calendar-plus"></i> Novo Agendamento</a></li>
+                                <li><a class="dropdown-item" href="cliente/perfil.php"><i class="fas fa-calendar-plus"></i> Perfil</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="cliente/logout.php"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
                             </ul>

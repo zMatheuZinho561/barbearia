@@ -1,4 +1,5 @@
 <?php
+// admin/ajax_horarios.php
 header('Content-Type: application/json');
 
 require_once '../config/database.php';
@@ -8,8 +9,8 @@ require_once '../includes/appointment.php';
 $auth = new Auth();
 $appointment = new Appointment();
 
-// Verificar se cliente está logado
-if (!$auth->isClientLoggedIn()) {
+// Verificar se admin está logado
+if (!$auth->isAdminLoggedIn()) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Não autorizado']);
     exit;
@@ -26,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (!$input || !isset($input['barbeiro_id']) || !isset($input['data'])) {
-    http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Dados inválidos']);
     exit;
 }

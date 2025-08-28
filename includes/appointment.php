@@ -65,96 +65,107 @@ class Appointment {
     
     // Obter horários disponíveis de um barbeiro em uma data - CORRIGIDO
     public function getHorariosDisponiveis($barbeiro_id, $data) {
-        try {
-            // Verificar se barbeiro existe
-            $stmt = $this->db->prepare("SELECT id FROM barbeiros WHERE id = ? AND ativo = 1");
-            $stmt->execute([$barbeiro_id]);
-            if ($stmt->rowCount() === 0) {
-                return [];
-            }
-            
-            $dia_semana = date('N', strtotime($data)); // 1=Segunda, 7=Domingo
-            
-            // Buscar horário de funcionamento do barbeiro
-            $stmt = $this->db->prepare("
-                SELECT hora_inicio, hora_fim
-                FROM horarios_disponiveis 
-                WHERE barbeiro_id = ? AND dia_semana = ? AND ativo = 1
-            ");
-            $stmt->execute([$barbeiro_id, $dia_semana]);
-            $funcionamento = $stmt->fetch();
-            
-            if (!$funcionamento) {
-                // Se não tem horário específico, usar horário padrão
-                // Segunda a Sexta: 8:00 às 18:00, Sábado: 8:00 às 14:00
-                if ($dia_semana >= 1 && $dia_semana <= 5) {
-                    $funcionamento = ['hora_inicio' => '08:00:00', 'hora_fim' => '18:00:00'];
-                } elseif ($dia_semana == 6) {
-                    $funcionamento = ['hora_inicio' => '08:00:00', 'hora_fim' => '14:00:00'];
-                } else {
-                    return []; // Domingo fechado
-                }
-            }
-            
-            // Buscar agendamentos já marcados
-            $stmt = $this->db->prepare("
-                SELECT TIME(a.hora_agendamento) as hora_agendamento, s.duracao
-                FROM agendamentos a
-                JOIN servicos s ON a.servico_id = s.id
-                WHERE a.barbeiro_id = ? AND a.data_agendamento = ? 
-                AND a.status IN ('agendado', 'confirmado')
-            ");
-            $stmt->execute([$barbeiro_id, $data]);
-            $agendados = $stmt->fetchAll();
-            
-            // Gerar horários disponíveis (intervalos de 30 minutos)
-            $horarios = [];
-            $inicio = strtotime($funcionamento['hora_inicio']);
-            $fim = strtotime($funcionamento['hora_fim']) - 1800; // -30min para último horário
-            
-            while ($inicio <= $fim) {
-                $hora_atual = date('H:i', $inicio);
-                $disponivel = true;
-                
-                // Verificar se o horário conflita com agendamentos existentes
-                foreach ($agendados as $agendado) {
-                    $hora_agendada = strtotime($agendado['hora_agendamento']);
-                    $fim_agendamento = $hora_agendada + ($agendado['duracao'] * 60);
-                    
-                    $inicio_atual = $inicio;
-                    $fim_atual = $inicio + 1800; // +30 minutos
-                    
-                    // Verificar sobreposição
-                    if (($inicio_atual >= $hora_agendada && $inicio_atual < $fim_agendamento) ||
-                        ($fim_atual > $hora_agendada && $fim_atual <= $fim_agendamento) ||
-                        ($inicio_atual <= $hora_agendada && $fim_atual >= $fim_agendamento)) {
-                        $disponivel = false;
-                        break;
-                    }
-                }
-                
-                // Não permitir agendamento no passado
-                $agora = new DateTime();
-                $data_hora = new DateTime($data . ' ' . $hora_atual);
-                if ($data_hora <= $agora) {
-                    $disponivel = false;
-                }
-                
-                if ($disponivel) {
-                    $horarios[] = $hora_atual;
-                }
-                
-                $inicio += 1800; // Adicionar 30 minutos
-            }
-            
-            return $horarios;
-            
-        } catch (Exception $e) {
-            error_log("Erro ao buscar horários disponíveis: " . $e->getMessage());
+    try {
+        // Validar entrada
+        if (empty($barbeiro_id) || empty($data)) {
             return [];
         }
+        
+        $dia_semana = date('N', strtotime($data)); // 1=Segunda, 7=Domingo
+        
+        // Buscar horário de funcionamento do barbeiro
+        $stmt = $this->db->prepare("
+            SELECT hora_inicio, hora_fim
+            FROM horarios_disponiveis 
+            WHERE barbeiro_id = ? AND dia_semana = ? AND ativo = 1
+        ");
+        $stmt->execute([$barbeiro_id, $dia_semana]);
+        $funcionamento = $stmt->fetch();
+        
+        if (!$funcionamento) {
+            // Se não encontrar configuração específica, usar horário padrão
+            $horarios_padrao = [
+                1 => ['08:00:00', '18:00:00'], // Segunda
+                2 => ['08:00:00', '18:00:00'], // Terça
+                3 => ['08:00:00', '18:00:00'], // Quarta
+                4 => ['08:00:00', '18:00:00'], // Quinta
+                5 => ['08:00:00', '18:00:00'], // Sexta
+                6 => ['08:00:00', '16:00:00'], // Sábado
+            ];
+            
+            if (!isset($horarios_padrao[$dia_semana])) {
+                return []; // Domingo ou dia não configurado
+            }
+            
+            $funcionamento = [
+                'hora_inicio' => $horarios_padrao[$dia_semana][0],
+                'hora_fim' => $horarios_padrao[$dia_semana][1]
+            ];
+        }
+        
+        // Buscar agendamentos já marcados
+        $stmt = $this->db->prepare("
+            SELECT TIME(hora_agendamento) as hora_agendamento, s.duracao
+            FROM agendamentos a
+            JOIN servicos s ON a.servico_id = s.id
+            WHERE a.barbeiro_id = ? AND a.data_agendamento = ? 
+            AND a.status IN ('agendado', 'confirmado')
+        ");
+        $stmt->execute([$barbeiro_id, $data]);
+        $agendados = $stmt->fetchAll();
+        
+        // Converter agendamentos para array de horários ocupados
+        $horarios_ocupados = [];
+        foreach ($agendados as $agendado) {
+            $inicio = strtotime($agendado['hora_agendamento']);
+            $duracao_segundos = ($agendado['duracao'] ?? 30) * 60; // Default 30 min
+            $fim = $inicio + $duracao_segundos;
+            
+            // Marcar todos os slots de 30 min ocupados neste período
+            for ($slot = $inicio; $slot < $fim; $slot += 1800) { // 1800 = 30 min
+                $horarios_ocupados[] = date('H:i', $slot);
+            }
+        }
+        
+        // Gerar horários disponíveis (intervalos de 30 minutos)
+        $horarios = [];
+        $inicio = strtotime($funcionamento['hora_inicio']);
+        $fim = strtotime($funcionamento['hora_fim']);
+        
+        // Não permitir agendamentos muito próximos ao fim do expediente (deixar pelo menos 30 min)
+        $fim -= 1800;
+        
+        while ($inicio <= $fim) {
+            $hora = date('H:i', $inicio);
+            
+            // Verificar se não está ocupado
+            if (!in_array($hora, $horarios_ocupados)) {
+                // Não permitir agendamento no passado
+                $agora = new DateTime();
+                $data_hora = new DateTime($data . ' ' . $hora);
+                
+                // Se for hoje, verificar se o horário já passou (+1 hora de antecedência mínima)
+                if ($data === date('Y-m-d')) {
+                    $agora->add(new DateInterval('PT1H')); // Adicionar 1 hora
+                }
+                
+                if ($data_hora > $agora) {
+                    $horarios[] = $hora;
+                }
+            }
+            
+            $inicio += 1800; // Adicionar 30 minutos
+        }
+        
+        return $horarios;
+        
+    } catch (Exception $e) {
+        error_log("Erro ao buscar horários disponíveis: " . $e->getMessage());
+        error_log("Barbeiro ID: $barbeiro_id, Data: $data");
+        return [];
     }
-    
+}
+
     // Criar agendamento
     public function criarAgendamento($cliente_id, $barbeiro_id, $servico_id, $data, $hora, $observacoes = '') {
         try {
