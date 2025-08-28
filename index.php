@@ -28,97 +28,11 @@ $produtos_destaque = $products->getProdutosDestaque(6);
     <title>BarberShop - Sua Barbearia de Confiança</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #e67e22;
-            --accent-color: #f39c12;
-            --dark-color: #1a252f;
-        }
-        
-        .hero-section {
-            background: linear-gradient(rgba(44, 62, 80, 0.8), rgba(26, 37, 47, 0.9)), 
-                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="%23333"/></svg>');
-            background-size: cover;
-            background-position: center;
-            color: white;
-            padding: 100px 0;
-        }
-        
-        .btn-primary {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--accent-color);
-            border-color: var(--accent-color);
-        }
-        
-        .card {
-            transition: transform 0.3s, box-shadow 0.3s;
-            border: none;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
-        }
-        
-        .navbar-brand {
-            font-weight: bold;
-            color: var(--primary-color) !important;
-        }
-        
-        .section-title {
-            color: var(--primary-color);
-            font-weight: bold;
-            margin-bottom: 3rem;
-            position: relative;
-        }
-        
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 3px;
-            background-color: var(--secondary-color);
-        }
-        
-        .price {
-            color: var(--accent-color);
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-        
-        footer {
-            background-color: var(--dark-color);
-            color: white;
-        }
-        
-        .barbeiro-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        
-        .floating-btn {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 1000;
-            border-radius: 50px;
-            padding: 15px 25px;
-        }
-    </style>
+    <link rel="stylesheet" href="./style/style_cliente/st_index.css">
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <!-- Navbar Melhorado -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
         <div class="container">
             <a class="navbar-brand" href="index.php">
                 <i class="fas fa-cut"></i> BarberShop
@@ -129,41 +43,65 @@ $produtos_destaque = $products->getProdutosDestaque(6);
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="#home">Início</a>
+                        <a class="nav-link active" href="#home">
+                            <i class="fas fa-home me-1"></i> Início
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#servicos">Serviços</a>
+                        <a class="nav-link" href="#servicos">
+                            <i class="fas fa-cut me-1"></i> Serviços
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#barbeiros">Barbeiros</a>
+                        <a class="nav-link" href="#barbeiros">
+                            <i class="fas fa-users me-1"></i> Barbeiros
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#produtos">Produtos</a>
+                        <a class="nav-link" href="#produtos">
+                            <i class="fas fa-shopping-bag me-1"></i> Produtos
+                        </a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
                     <?php if ($cliente_logado): ?>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user"></i> <?= htmlspecialchars($cliente_data['nome']) ?>
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle me-1"></i> <?= htmlspecialchars($cliente_data['nome']) ?>
                             </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="cliente/agenda.php"><i class="fas fa-calendar-alt"></i> Meus Agendamentos</a></li>
-                                <li><a class="dropdown-item" href="cliente/agendar.php"><i class="fas fa-calendar-plus"></i> Novo Agendamento</a></li>
-                                <li><a class="dropdown-item" href="cliente/perfil.php"><i class="fas fa-calendar-plus"></i> Perfil</a></li>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="cliente/agenda.php">
+                                        <i class="fas fa-calendar-alt"></i> Meus Agendamentos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="cliente/agendar.php">
+                                        <i class="fas fa-calendar-plus"></i> Novo Agendamento
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="cliente/perfil.php">
+                                        <i class="fas fa-user-cog"></i> Perfil
+                                    </a>
+                                </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="cliente/logout.php"><i class="fas fa-sign-out-alt"></i> Sair</a></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="cliente/logout.php">
+                                        <i class="fas fa-sign-out-alt"></i> Sair
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
                             <a class="nav-link" href="cliente/login.php">
-                                <i class="fas fa-sign-in-alt"></i> Entrar
+                                <i class="fas fa-sign-in-alt me-1"></i> Entrar
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="cliente/register.php">
-                                <i class="fas fa-user-plus"></i> Cadastrar
+                                <i class="fas fa-user-plus me-1"></i> Cadastrar
                             </a>
                         </li>
                     <?php endif; ?>
@@ -322,8 +260,7 @@ $produtos_destaque = $products->getProdutosDestaque(6);
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Smooth scroll para links do menu
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
@@ -332,8 +269,51 @@ $produtos_destaque = $products->getProdutosDestaque(6);
                         behavior: 'smooth',
                         block: 'start'
                     });
+                    
+                    // Fechar menu mobile após clique
+                    const navbarCollapse = document.querySelector('.navbar-collapse');
+                    if (navbarCollapse.classList.contains('show')) {
+                        const bsCollapse = new bootstrap.Collapse(navbarCollapse);
+                        bsCollapse.hide();
+                    }
                 }
             });
+        });
+
+        // Adicionar classe active baseada na seção visível
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.navbar-nav .nav-link[href^="#"]');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                const sectionHeight = section.offsetHeight;
+                if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Animação do botão flutuante
+        window.addEventListener('scroll', function() {
+            const floatingBtn = document.querySelector('.floating-btn');
+            if (floatingBtn) {
+                if (window.scrollY > 300) {
+                    floatingBtn.style.opacity = '1';
+                    floatingBtn.style.transform = 'translateY(0)';
+                } else {
+                    floatingBtn.style.opacity = '0';
+                    floatingBtn.style.transform = 'translateY(20px)';
+                }
+            }
         });
     </script>
 </body>
