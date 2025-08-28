@@ -30,6 +30,8 @@ if ($_POST && isset($_POST['login'])) {
 }
 
 $csrf_token = generateCSRFToken();
+
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">

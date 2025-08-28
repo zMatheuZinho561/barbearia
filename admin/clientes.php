@@ -241,97 +241,443 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes - BarberShop Admin</title>
+    <title>Menu Admin Moderno - BarberShop</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #e67e22;
-            --accent-color: #f39c12;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            --gold-gradient: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+            --navbar-bg: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-light: rgba(255, 255, 255, 0.9);
+            --text-lighter: rgba(255, 255, 255, 0.7);
+            --hover-bg: rgba(255, 255, 255, 0.15);
+            --active-bg: rgba(255, 255, 255, 0.25);
+            --shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --shadow-light: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
         
         body { 
-            background-color: #f8f9fa; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
-        .navbar-brand { font-weight: bold; color: var(--primary-color) !important; }
-        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 10px; }
-        .admin-badge { background-color: var(--accent-color); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
-        
-        .filters-card {
-            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+
+        /* Navbar Principal */
+        .admin-navbar {
+            background: var(--navbar-bg);
+            backdrop-filter: blur(20px);
+            border: none;
+            box-shadow: var(--shadow-dark);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 0.8rem 0;
         }
-        
-        .client-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--primary-color);
+
+        .admin-navbar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.05"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.05"/><circle cx="75" cy="25" r="1" fill="white" opacity="0.03"/><circle cx="25" cy="75" r="1" fill="white" opacity="0.03"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        /* Logo */
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.5rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            color: #ffd700 !important;
+        }
+
+        .brand-icon {
+            background: var(--gold-gradient);
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.2rem;
             color: white;
-            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(247, 151, 30, 0.4);
         }
-        
-        .nav-link.active {
-            background-color: var(--primary-color) !important;
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .brand-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .brand-subtitle {
+            font-size: 0.7rem;
+            opacity: 0.8;
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        /* Menu Items */
+        .navbar-nav .nav-link {
+            color: var(--text-light) !important;
+            font-weight: 500;
+            padding: 0.75rem 1.25rem !important;
+            margin: 0 0.25rem;
+            border-radius: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid transparent;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: var(--hover-bg);
             color: white !important;
-            border-radius: 5px;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1);
+            border-color: var(--glass-border);
         }
-        
-        .status-badge {
-            font-size: 0.75em;
-            padding: 0.4em 0.8em;
+
+        .navbar-nav .nav-link.active {
+            background: var(--active-bg);
+            color: #ffd700 !important;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.3);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .navbar-nav .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 20px;
+            background: var(--gold-gradient);
+            border-radius: 0 3px 3px 0;
+        }
+
+        .nav-link i {
+            font-size: 1rem;
+            width: 16px;
+            text-align: center;
+        }
+
+        /* Dropdown Admin */
+        .admin-dropdown .nav-link {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(15px);
+        }
+
+        .admin-dropdown .nav-link:hover {
+            background: var(--hover-bg);
+            border-color: rgba(255, 215, 0, 0.4);
+        }
+
+        .admin-badge {
+            background: var(--gold-gradient);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+            box-shadow: 0 2px 8px rgba(247, 151, 30, 0.4);
+            animation: pulse-gold 2s infinite;
+        }
+
+        @keyframes pulse-gold {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            padding: 0.75rem 0;
+            min-width: 280px;
+        }
+
+        .dropdown-item {
+            color: #2c3e50;
+            padding: 0.75rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .dropdown-item.text-danger:hover {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+        }
+
+        .dropdown-header {
+            color: #6c757d;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.5rem 1.25rem;
+        }
+
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Mobile Navbar */
+        .navbar-toggler {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 0.25rem rgba(255, 215, 0, 0.25);
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='m4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(20px);
+                margin-top: 1rem;
+                border-radius: 12px;
+                padding: 1rem;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            }
+
+            .navbar-nav .nav-link {
+                color: #2c3e50 !important;
+                margin: 0.25rem 0;
+            }
+
+            .navbar-nav .nav-link:hover {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white !important;
+            }
+
+            .admin-dropdown .nav-link {
+                background: linear-gradient(135deg, #2c3e50, #3498db);
+                color: white !important;
+            }
+        }
+
+        /* Animações suaves */
+        .navbar-nav, .dropdown-menu {
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Indicador de notificações */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-3px); }
+            60% { transform: translateY(-2px); }
+        }
+
+        /* Demo content styling */
+        .demo-content {
+            padding: 2rem 0;
+        }
+
+        .demo-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 15px;
-        }
-        
-        .action-buttons .btn {
-            margin: 0 2px;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-        }
-        
-        .table-hover tbody tr:hover {
-            background-color: rgba(0,0,0,0.05);
+            box-shadow: var(--shadow-light);
         }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
+    <!-- Navbar Admin Moderna -->
+    <nav class="navbar navbar-expand-lg admin-navbar">
         <div class="container-fluid">
+            <!-- Brand Logo -->
             <a class="navbar-brand" href="dashboard.php">
-                <i class="fas fa-cut"></i> BarberShop Admin
+                <div class="brand-icon">
+                    <i class="fas fa-cut"></i>
+                </div>
+                <div class="brand-text">
+                    <span class="brand-title">BarberShop</span>
+                    <span class="brand-subtitle">ADMIN PANEL</span>
+                </div>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+            <!-- Mobile Toggle -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+
+            <!-- Navigation Menu -->
+            <div class="collapse navbar-collapse" id="adminNavbar">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" href="admin_agendamentos.php"><i class="fas fa-calendar"></i> Agendamentos</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="clientes.php"><i class="fas fa-users"></i> Clientes</a></li>
-                    <li class="nav-item"><a class="nav-link" href="barbeiros.php"><i class="fas fa-user-tie"></i> Barbeiros</a></li>
-                    <li class="nav-item"><a class="nav-link" href="servicos.php"><i class="fas fa-list"></i> Serviços</a></li>
-                    <li class="nav-item"><a class="nav-link" href="produtos.php"><i class="fas fa-box"></i> Produtos</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="dashboard.php">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin_agendamentos.php">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Agendamentos</span>
+                            <span class="notification-badge">5</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="clientes.php">
+                            <i class="fas fa-users"></i>
+                            <span>Clientes</span>
+                        </a>
+                    </li>
+                        <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Barbeiros</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-scissors"></i>
+                            <span>Serviços</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="planos.php">
+                            <i class="fas fa-crown"></i>
+                            <span>Planos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="clientes_planos.php">
+                            <i class="fas fa-users-cog"></i>
+                            <span>Assinaturas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="produtos.php">
+                            <i class="fas fa-box-open"></i>
+                            <span>Produtos</span>
+                        </a>
+                    </li>
                 </ul>
+
+                <!-- Admin Profile Dropdown -->
                 <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
+                    <li class="nav-item dropdown admin-dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-shield"></i> 
-                            <?= htmlspecialchars($admin_data['nome']) ?>
+                            <i class="fas fa-user-shield"></i>
+                            <span>Admin Master</span>
                             <span class="admin-badge">ADMIN</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            
-                            <li><a class="dropdown-item" href="perfil.php"><i class="fas fa-user-cog"></i> Meu Perfil</a></li>
-                            <li><a class="dropdown-item" href="configuracoes.php"><i class="fas fa-cogs"></i> Configurações</a></li>
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="fas fa-crown"></i> Painel Administrativo
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="perfil.php">
+                                    <i class="fas fa-user-cog"></i>
+                                    <span>Meu Perfil</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="configuracoes.php">
+                                    <i class="fas fa-cogs"></i>
+                                    <span>Configurações</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="relatorios.php">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Relatórios</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="backup.php">
+                                    <i class="fas fa-database"></i>
+                                    <span>Backup</span>
+                                </a>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="admin_logout.php"><i class="fas fa-sign-out-alt"></i> Sair do Admin</a></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="admin_logout.php">
+                                    <i class="fas fa-sign-out-alt"></i>
+                                    <span>Sair do Admin</span>
+                                </a>
+                            </li>
                         </ul>
                     </li>
                 </ul>
